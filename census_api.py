@@ -3,8 +3,6 @@ Early work in progress. To access the Census data dictionary, visit:
 https://api.census.gov/data.html
 '''
 # For loading data if you want to skip all the previous inputs
-import numpy as np
-import pandas as pd
 import requests
 
 class Census(object):
@@ -31,12 +29,12 @@ class Census(object):
             src = year + '/acs/acs5'
         
         # Construct query URL
-        url = self.root_url + src + '/profile/variables.json'
+        url = self.root_url + src + '/variables.json'
         
         # Pull data and convert to dataframe
         request = requests.get(url).json()
         
-        data = pd.DataFrame(request['variables'])
+        data = request['variables']
         
         return data
     
@@ -52,6 +50,10 @@ class Census(object):
             var = 'get=' + ','.join(variables)
         else:
             var = 'get=' + variables
+        # Calculate number of variables
+        var_cnt = var.count(',') + 1
+        # Replace spaces in geographic scope
+        geographical_level = geographical_level.replace(' ', '%20')
         # Enter geographic scope and target subset
         if all == False:
             geo = 'for=' + geographical_level + ':' + geographies
@@ -65,8 +67,17 @@ class Census(object):
         
         # Send request and convert data to dataframe format
         request = requests.get(url).json()
-        
-        data = pd.DataFrame(request[1:], columns = request[0])
+        convert = [
+            [
+                int(element) if element.isdigit() and index < var_cnt else element for index, element in enumerate(entry)
+            ] for entry in request
+        ]
+
+        data = {
+            ''.join(entry[var_cnt:]): {
+                convert[0][name]: entry[name] for name in range(0,var_cnt)
+            } for entry in convert[1:]
+        }
         
         return data
     
@@ -79,6 +90,10 @@ class Census(object):
             var = 'get=' + ','.join(variables)
         else:
             var = 'get=' + variables
+        # Calculate number of variables
+        var_cnt = var.count(',') + 1
+        # Replace spaces in geographic scope
+        geographical_level = geographical_level.replace(' ', '%20')
         # Enter geographic scope and target subset
         if all == False:
             geo = 'for=' + geographical_level + ':' + geographies
@@ -92,35 +107,18 @@ class Census(object):
         
         # Send request and convert data to dataframe format
         request = requests.get(url).json()
-        
-        data = pd.DataFrame(request[1:], columns = request[0])
-        
-        return data
-    
-    # County Business Profile survey data
-    def get_cbp(self, year = 2010, variables = '', geographical_level = '', geographies = '', all = True):
-        # Set directory based on year of survey
-        src = year + '/cbp?'
-        # If variables input as list, break into comma-delimited string
-        if type(variables) is list or type(variables) is tuple:
-            var = 'get=' + ','.join(variables)
-        else:
-            var = 'get=' + variables
-        # Enter geographic scope and target subset
-        if all == False:
-            geo = 'for=' + geographical_level + ':' + geographies
-        else:
-            geo = 'for=' + geographical_level + ':*'
-        # Construct URL for query
-        if self.key is not None:
-            url = self.root_url + src + var + '&' + geo + '&key=' + self.key
-        else:
-            url = self.root_url + src + var + '&' + geo
-        
-        # Send request and convert data to dataframe format
-        request = requests.get(url).json()
-        
-        data = pd.DataFrame(request[1:], columns = request[0])
+        convert = [
+            [
+                int(element) if element.isdigit() and index < var_cnt else element for index, element in enumerate(entry)
+            ] for entry in request
+        ]
+
+        data = {
+            ''.join(entry[var_cnt:]): {
+                convert[0][name]: entry[name] for name in range(0,var_cnt)
+            } for entry in convert[1:]
+        }
         
         return data
+
 
