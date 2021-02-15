@@ -67,17 +67,19 @@ class Census(object):
         
         # Send request and convert data to dataframe format
         request = requests.get(url).json()
-        convert = [
+        data = [
             [
-                int(element) if element.isdigit() and index < var_cnt else element for index, element in enumerate(entry)
+                int(element) if element is not None
+                and element.isdigit()
+                and index < var_cnt
+                else None if element is not None
+                and '-' in element
+                and element.replace('-','').isdigit()
+                and index < var_cnt
+                else element
+                for index, element in enumerate(entry)
             ] for entry in request
         ]
-
-        data = {
-            ''.join(entry[var_cnt:]): {
-                convert[0][name]: entry[name] for name in range(0,var_cnt)
-            } for entry in convert[1:]
-        }
         
         return data
     
@@ -107,17 +109,61 @@ class Census(object):
         
         # Send request and convert data to dataframe format
         request = requests.get(url).json()
-        convert = [
+        data = [
             [
-                int(element) if element.isdigit() and index < var_cnt else element for index, element in enumerate(entry)
+                int(element) if element is not None
+                and element.isdigit()
+                and index < var_cnt
+                else None if element is not None
+                and '-' in element
+                and element.replace('-','').isdigit()
+                and index < var_cnt
+                else element
+                for index, element in enumerate(entry)
             ] for entry in request
         ]
-
-        data = {
-            ''.join(entry[var_cnt:]): {
-                convert[0][name]: entry[name] for name in range(0,var_cnt)
-            } for entry in convert[1:]
-        }
+        
+        return data
+    
+    # County Business Profile survey data
+    def get_cbp(self, year = 2010, variables = '', geographical_level = '', geographies = '', all = True):
+        # Set directory based on year of survey
+        src = year + '/cbp?'
+        # If variables input as list, break into comma-delimited string
+        if type(variables) is list or type(variables) is tuple:
+            var = 'get=' + ','.join(variables)
+        else:
+            var = 'get=' + variables
+        # Calculate number of variables
+        var_cnt = var.count(',') + 1
+        # Replace spaces in geographic scope
+        geographical_level = geographical_level.replace(' ', '%20')
+        # Enter geographic scope and target subset
+        if all == False:
+            geo = 'for=' + geographical_level + ':' + geographies
+        else:
+            geo = 'for=' + geographical_level + ':*'
+        # Construct URL for query
+        if self.key is not None:
+            url = self.root_url + src + var + '&' + geo + '&key=' + self.key
+        else:
+            url = self.root_url + src + var + '&' + geo
+        
+        # Send request and convert data to dataframe format
+        request = requests.get(url).json()
+        data = [
+            [
+                int(element) if element is not None
+                and element.isdigit()
+                and index < var_cnt
+                else None if element is not None
+                and '-' in element
+                and element.replace('-','').isdigit()
+                and index < var_cnt
+                else element
+                for index, element in enumerate(entry)
+            ] for entry in request
+        ]
         
         return data
 
