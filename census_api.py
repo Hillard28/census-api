@@ -21,12 +21,14 @@ class Census(object):
             print('You may not have entered a valid API key')
     
     # Pulls all variable names from survey with descriptions
-    def get_dict(self, survey = 'acs1', year = 2019):
+    def get_dict(self, source = 'acs1', year = 2019):
         # Set directory based on ACS survey selected
-        if survey == 'acs1':
-            src = year + '/acs/acs1'
-        elif survey == 'acs5':
-            src = year + '/acs/acs5'
+        if 'acs' in source:
+            src = year + '/acs/' + source
+        elif 'sf' in source:
+            src = year + '/dec/' + source
+        else:
+            src = year + '/' + source
         
         # Construct query URL
         url = self.root_url + src + '/variables.json'
