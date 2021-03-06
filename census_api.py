@@ -38,13 +38,15 @@ class Census(object):
         
         return data
     
-    # American Community Survey data
-    def get_acs(self, acs = 'acs1', year = 2019, variables = '', geographical_level = '', geographies = '', all = True):
+    # Request Census data
+    def get_data(self, source = 'acs1', year = 2019, variables = '', geographical_level = '', geographies = '', all = True):
         # Set directory based on year and ACS survey selected
-        if acs == 'acs5':
-            src = year + '/acs/acs5?'
+        if 'acs' in source:
+            src = year + '/acs/' + source + '?'
+        elif 'sf' in source:
+            src = year + '/dec/' + source + '?'
         else:
-            src = year + '/acs/acs1?'
+            src = year + '/' + source + '?'
         # If variables input as list, break into comma-delimited string
         if type(variables) is list or type(variables) is tuple:
             var = 'get=' + ','.join(variables)
@@ -82,89 +84,11 @@ class Census(object):
         ]
         
         return data
-    
-    # Decennial Census data
-    def get_dec(self, dec = 'sf1', year = 2010, variables = '', geographical_level = '', geographies = '', all = True):
-        # Set directory based on year and Decennial Census Survey selected
-        src = year + '/dec/' + dec + '?'
-        # If variables input as list, break into comma-delimited string
-        if type(variables) is list or type(variables) is tuple:
-            var = 'get=' + ','.join(variables)
-        else:
-            var = 'get=' + variables
-        # Calculate number of variables
-        var_cnt = var.count(',') + 1
-        # Replace spaces in geographic scope
-        geographical_level = geographical_level.replace(' ', '%20')
-        # Enter geographic scope and target subset
-        if all == False:
-            geo = 'for=' + geographical_level + ':' + geographies
-        else:
-            geo = 'for=' + geographical_level + ':*'
-        # Construct URL for query
-        if self.key is not None:
-            url = self.root_url + src + var + '&' + geo + '&key=' + self.key
-        else:
-            url = self.root_url + src + var + '&' + geo
-        
-        # Send request and convert data to dataframe format
-        request = requests.get(url).json()
-        data = [
-            [
-                int(element) if element is not None
-                and element.isdigit()
-                and index < var_cnt
-                else None if element is not None
-                and '-' in element
-                and element.replace('-','').isdigit()
-                and index < var_cnt
-                else element
-                for index, element in enumerate(entry)
-            ] for entry in request
-        ]
-        
-        return data
-    
-    # County Business Profile survey data
-    def get_cbp(self, year = 2010, variables = '', geographical_level = '', geographies = '', all = True):
-        # Set directory based on year of survey
-        src = year + '/cbp?'
-        # If variables input as list, break into comma-delimited string
-        if type(variables) is list or type(variables) is tuple:
-            var = 'get=' + ','.join(variables)
-        else:
-            var = 'get=' + variables
-        # Calculate number of variables
-        var_cnt = var.count(',') + 1
-        # Replace spaces in geographic scope
-        geographical_level = geographical_level.replace(' ', '%20')
-        # Enter geographic scope and target subset
-        if all == False:
-            geo = 'for=' + geographical_level + ':' + geographies
-        else:
-            geo = 'for=' + geographical_level + ':*'
-        # Construct URL for query
-        if self.key is not None:
-            url = self.root_url + src + var + '&' + geo + '&key=' + self.key
-        else:
-            url = self.root_url + src + var + '&' + geo
-        
-        # Send request and convert data to dataframe format
-        request = requests.get(url).json()
-        data = [
-            [
-                int(element) if element is not None
-                and element.isdigit()
-                and index < var_cnt
-                else None if element is not None
-                and '-' in element
-                and element.replace('-','').isdigit()
-                and index < var_cnt
-                else element
-                for index, element in enumerate(entry)
-            ] for entry in request
-        ]
-        
-        return data
+
+
+
+
+
+
 
 
